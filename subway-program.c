@@ -3,13 +3,14 @@
 
 #ifdef _WIN32  
 // If the machine is windows then import windows lib for sleep()
-#include <Windows.h>
+#   include <Windows.h>
 #else  
 // else import the unistd lib for sleep()
-#include <unistd.h>
+#   include <unistd.h>
 #endif
 
 #define N_ITEMS 5
+#define line "---------------------------------------------------------"
 
 enum Items {
     BREAD = 0,
@@ -35,10 +36,11 @@ const int prices[N_ITEMS][5] = {
     {35, 30, 25, 35, 30}
 };
 
-const char* line = "_____________________________________________________";
 
-void loading_dots();
-void display_logo();
+void loading(char*);
+void display_logo(unsigned int);
+void wait(unsigned int);
+void clrscr();
 
 void selection_choice(int* p, char* category, enum Items cat_num);
 void prepare_cat(int* storage, enum Items cat, char* category);
@@ -46,7 +48,7 @@ void combo_price_func(enum Items cat, int* storage, int* invoice_arr, int offset
 
 int main()
 {
-    int choice[5][3] = {-1};
+    int choice[5][3] = {{-1}};
     char* names[] = {"Bread", "Flavour", "Cheese", "Veggies", "Sauce"};
     int offsets[5] = {0, 1, 2, 3, 6}; // offset for the category to live in the `combo_price` array.
     
@@ -59,31 +61,38 @@ int main()
     enum Items item; // Iterable
     int i;
 
-    display_logo();
+    clrscr();
+
+    display_logo(1);
     puts("[*] Select Your Combo");
     
     for ( item = BREAD; item <= SAUCE; item++ )
+    {
         selection_choice(choice[item], names[item], item);
+        loading("*");
+        clrscr();
+    }
 
     puts("\nYour Combo has been Selected successfully!!\n");
     puts(line);
     printf("Preparing your combo");
-    loading_dots();
+    loading(".");
     printf("\n");
 
     for ( item = BREAD; item <= SAUCE; item++ )
         prepare_cat(choice[item], item, names[item]);
 
-    puts("\n_____________________________________________________\n");
+    puts(line);
     puts("                  Enjoy Your Combo                     ");
-    puts("_____________________________________________________\n");
-    puts("                       Invoice                         ");
-    puts("_____________________________________________________\n");
-    puts("                       Subway                          ");
-    puts("                  Central Mall, Pune                   ");
-    puts("_____________________________________________________\n");
-    puts("                  Make your own Sub                    ");
-    puts("_____________________________________________________\n\n");
+    puts(line);
+    puts("\n                       Invoice                         ");
+    puts(line);
+    puts("\n                       Subway                          ");
+    puts("                    GPP Mall, Pune                     ");
+    puts(line);
+    puts("\n                  Make your own Sub                    ");
+    puts(line);
+    puts("\n");
 
     for ( item = BREAD; item <= SAUCE; item++ )
         combo_price_func(item, choice[item], combo_price, offsets[item]);
@@ -98,53 +107,71 @@ int main()
     printf("[2]  Service Charges   %d\n", invoice_service);
     printf("[3]  Taxes             %d\n", invoice_tax);
     puts("\n\n");
-    puts("_____________________________________________________\n");
-    printf("Total Amount : %d\n", (invoice_combo + invoice_service + invoice_tax));
-    puts("_____________________________________________________");
-    puts("_____________________________________________________\n");
-    puts("         Thank You for visting and shopping!!         ");
+    puts(line);
+    printf("\nTotal Amount : %d\n", (invoice_combo + invoice_service + invoice_tax));
+    puts(line);
+    puts(line);
+    puts("\n         Thank You for visting and shopping!!         ");
     puts("                     Subway                          ");
-    puts("                    Eat Fresh                        ");
-    puts("\n_____________________________________________________");
-    puts("             Created by Yash Thakare                    ");
+    puts("                    Eat Fresh                        \n");
+    puts(line);
+    puts("             Created by: Group 1            ");
 
     return EXIT_SUCCESS;
 }
 
-void loading_dots()
+void wait(unsigned int __seconds)
+{
+    #ifndef DEBUG  // use -DDEBUG flag for gcc/clang to swith between debug and non-debug mode
+    #   ifdef _WIN32
+            Sleep(__seconds);
+    #   else
+            sleep(__seconds);
+    #   endif
+    #endif
+}
+
+void clrscr()
+{
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+}
+
+void loading(char* animation_str)
 {
     int i;
     for ( i = 0; i < 3; i++ )
     {
         fflush(stdout);
+        wait(1);
 
-        #ifndef DEBUG
-            sleep(1);
-        #endif
-
-        printf(".");
+        printf("%s", animation_str);
     }
 }
 
-void display_logo()
+void display_logo(unsigned int wait_time)
 {
-    const char* logo[5] = {
-        "  ||||||  ||  ||  ||||||  ||   ||  ||||||  ||   ||",
-        "  ||      ||  ||  ||  ||  ||   ||  ||  ||   || || ",
-        "  ||||||  ||  ||  |||||   ||   ||  ||||||     ||  ",
-        "      ||  ||  ||  ||  ||  || | ||  ||  ||     ||  ",
-        "  ||||||  ||||||  ||||||  ||| |||  ||  ||     ||  "
+    const char* logo[6] = {
+        "\x1B[33m __  __ _               \x1B[32m ____            _           _   ",
+        "\x1B[33m|  \\/  (_) ___ _ __ ___ \x1B[32m|  _ \\ _ __ ___ (_) ___  ___| |_ ",
+        "\x1B[33m| |\\/| | |/ __| '__/ _ \\\x1B[32m| |_) | '__/ _ \\| |/ _ \\/ __| __|",
+        "\x1B[33m| |  | | | (__| | | (_) \x1B[32m|  __/| | | (_) | |  __/ (__| |_ ",
+        "\x1B[33m|_|  |_|_|\\___|_|  \\___/\x1B[32m|_|   |_|  \\___// |\\___|\\___|\\__|",
+        "                                      |__/                 \x1B[0m"
     };
 
     puts(line);
-    for ( int i = 0; i < 5; i++ )
+    for ( int i = 0; i < 6; i++ )
     {
         puts(logo[i]);
-        fflush(stdout);
-
-        #ifndef DEBUG  // use -DDEBUG flag for gcc/clang to swith between debug and non-debug mode
-            sleep(1);
-        #endif
+        if (wait_time > 0)
+        {
+            fflush(stdout);
+            wait(wait_time);
+        }
     }
     puts(line);
 }
@@ -154,7 +181,7 @@ void selection_choice(int* storage, char* category, enum Items cat_num)
     int i, j, choice, cond = 1;
     puts(line);
     printf("Options for %s : \n", category);
-    puts(line);
+    // puts(line);
 
     if ( ( cat_num == VEGGIES ) || ( cat_num == SAUCE ))
     {
@@ -170,20 +197,21 @@ void selection_choice(int* storage, char* category, enum Items cat_num)
     {
         for ( j = 0; j <= 5; j++ )
         {
-            printf("Please enter your choice code for %s: ", category);
-            scanf("%d", &choice);
+            printf("\nPlease enter your choice code for %s: ", category);
+            scanf(" %d", &choice);
+
             if ( j == 4 )
             {
-                printf("Too many Failed attempts");
-                loading_dots();
+                printf("\nToo many Failed attempts");
+                loading(".");
                 puts("\nTry Again");
                 puts(line);
                 puts("              Thank You for visting                  ");
                 exit(-1);
             }
-            else if (choice < 0 && choice > 5)
+            else if (choice < 0 || choice > 5)
             {
-                puts("[-] Invalid option, please try again");
+                puts("\x1B[31m[-] Invalid option, please try again\x1B[0m");
                 continue;
             }
             
@@ -191,7 +219,7 @@ void selection_choice(int* storage, char* category, enum Items cat_num)
             {
                 if ((cat_num != VEGGIES) && (cat_num != SAUCE))
                 {    
-                    printf("This is a mandatory option, please try again");
+                    puts("This is a mandatory option, please try again");
                     puts(line);
                     continue;
                 }
@@ -203,7 +231,7 @@ void selection_choice(int* storage, char* category, enum Items cat_num)
             }
          
             choice--; // to align with C programming language indexing
-            printf("%s selected\n", options[cat_num][choice]);
+            printf("\x1B[34m%s selected\x1B[0m\n", options[cat_num][choice]);
             storage[i] = choice;
             puts(line);
             break;
@@ -228,8 +256,8 @@ void prepare_cat(int* storage, enum Items cat, char* category)
         if (choice == -1)
             break;
 
-        printf("\nAdding %s", options[cat][choice]);
-        loading_dots();
+        printf("\n\x1B[32mAdding %s\x1B[0m", options[cat][choice]);
+        loading(".");
     }
 }
 
